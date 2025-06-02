@@ -1,0 +1,95 @@
+unit main;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Types, Vcl.StdCtrls;
+
+type
+  TForm1 = class(TForm)
+    EnemyTimer: TTimer;
+    Enemy: TShape;
+    Player: TShape;
+    Panel1: TPanel;
+    Start: TButton;
+    Level: TLabel;
+    LevelTimer: TTimer;
+    procedure EnemyTimerTimer(Sender: TObject);
+    procedure LevelTimerTimer(Sender: TObject);
+    procedure FormMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+    procedure StartClick(Sender: TObject);    { This timer will control how the opponent will move around}
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  Form1: TForm1;
+
+implementation
+
+{$R *.dfm}
+
+procedure TForm1.EnemyTimerTimer(Sender: TObject);
+var
+  overlappedRect: TRect;
+begin
+  { instead of moving 1 pixel down to the bottom we can now
+    implement a simple AI that will chase down the player object !}
+{  Enemy.Top := (Enemy.Top + 1);                                   }
+
+  if Enemy.Left < Player.Left then Enemy.Left := Enemy.Left + level.Tag;
+  if Enemy.Left > Player.Left then Enemy.Left := Enemy.Left - level.Tag;
+  if Enemy.Top < Player.Top then Enemy.Top := Enemy.Top + level.Tag;
+  if Enemy.Top > Player.Top then Enemy.Top := Enemy.Top - level.Tag;
+  { if the enemy is all the way to edge of the screen then move the enemy down
+    one pixel and reset the horizontal location ! }
+  if Enemy.Top > Form1.Height then
+    Enemy.Top := 0;
+  { now lets work on the collision detection}
+  if IntersectRect(overlappedRect, player.BoundsRect,enemy.BoundsRect) then begin
+    EnemyTimer.enabled := false;
+    LevelTimer.enabled := false;
+    ShowMessage('You are dead !' + sLineBreak + 'GAME OVER');
+    {we are dead but let us reenabled the start button so we can start the game again !}
+    Start.Enabled := True;
+  end;
+end;
+
+procedure TForm1.LevelTimerTimer(Sender: TObject);
+begin
+  Level.Tag := Level.Tag + 1;
+  Level.Caption := IntToStr(Level.tag);
+end;
+procedure TForm1.FormMouseMove(Sender: TObject; Shift: TShiftState; X,
+  Y: Integer);
+begin
+  if enemytimer.enabled then begin
+    player.Left := X - (player.Width div 2);
+    player.Top := Y - (player.Height div 2);
+  end;
+
+end;
+
+procedure TForm1.StartClick(Sender: TObject);
+begin
+  { reset the enemy and player starting positions}
+  Enemy.Left := 8;
+  Enemy.Top := 8;
+
+  Player.Left := 386;
+  Player.Top := 213;
+
+  Level.Caption := '1';
+  Level.Tag := StrToInt(Level.Caption);
+  Start.Enabled := False;
+
+  { start the flee game timer's }
+  EnemyTimer.Enabled := true;
+  LevelTimer.Enabled := true;
+
+  end;
+
+end.

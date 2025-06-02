@@ -1,0 +1,62 @@
+unit main;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Types;
+
+type
+  TForm1 = class(TForm)
+    EnemyTimer: TTimer;
+    Enemy: TShape;
+    Player: TShape;
+    procedure EnemyTimerTimer(Sender: TObject);
+    procedure FormMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);    { This timer will control how the opponent will move around}
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  Form1: TForm1;
+
+implementation
+
+{$R *.dfm}
+
+procedure TForm1.EnemyTimerTimer(Sender: TObject);
+var
+  overlappedRect: TRect;
+begin
+  { instead of moving 1 pixel down to the bottom we can now
+    implement a simple AI that will chase down the player object !}
+{  Enemy.Top := (Enemy.Top + 1);                                   }
+
+  if Enemy.Left < Player.Left then Enemy.Left := Enemy.Left + 1;
+  if Enemy.Left > Player.Left then Enemy.Left := Enemy.Left - 1;
+  if Enemy.Top < Player.Top then Enemy.Top := Enemy.Top + 1;
+  if Enemy.Top > Player.Top then Enemy.Top := Enemy.Top - 1;
+  { if the enemy is all the way to edge of the screen then move the enemy down
+    one pixel and reset the horizontal location ! }
+  if Enemy.Top > Form1.Height then
+    Enemy.Top := 0;
+  { now lets work on the collision detection}
+  if IntersectRect(overlappedRect, player.BoundsRect,enemy.BoundsRect) then begin
+    EnemyTimer.enabled := false;
+    ShowMessage('You are dead !' + sLineBreak + 'GAME OVER');
+  end;
+end;
+
+procedure TForm1.FormMouseMove(Sender: TObject; Shift: TShiftState; X,
+  Y: Integer);
+begin
+  if enemytimer.enabled then begin
+    player.Left := X - (player.Width div 2);
+    player.Top := Y - (player.Height div 2);
+  end;
+
+end;
+
+end.
