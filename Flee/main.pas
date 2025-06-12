@@ -4,21 +4,30 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Types, Vcl.StdCtrls;
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.ExtCtrls, Types, Vcl.StdCtrls,
+  Vcl.Imaging.jpeg;
 
 type
-  TForm1 = class(TForm)
+    TForm1 = class(TForm)
     EnemyTimer: TTimer;
-    Enemy: TShape;
-    Player: TShape;
     Panel1: TPanel;
     Start: TButton;
     Level: TLabel;
     LevelTimer: TTimer;
+    PlayerScore: TLabel;
+    ScoreTimer: TTimer;
+    HighScore: TLabel;
+    player: TImage;
+    Enemy: TImage;
+    Path: TLabel;
+    GameImage: TImage;
     procedure EnemyTimerTimer(Sender: TObject);
     procedure LevelTimerTimer(Sender: TObject);
-    procedure FormMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
-    procedure StartClick(Sender: TObject);    { This timer will control how the opponent will move around}
+    procedure StartClick(Sender: TObject);
+    procedure ScoreTimerTimer(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
+    procedure GameImageMouseMove(Sender: TObject; Shift: TShiftState; X,
+      Y: Integer);
   private
     { Private declarations }
   public
@@ -44,15 +53,25 @@ begin
   if Enemy.Left > Player.Left then Enemy.Left := Enemy.Left - level.Tag;
   if Enemy.Top < Player.Top then Enemy.Top := Enemy.Top + level.Tag;
   if Enemy.Top > Player.Top then Enemy.Top := Enemy.Top - level.Tag;
+
   { if the enemy is all the way to edge of the screen then move the enemy down
     one pixel and reset the horizontal location ! }
   if Enemy.Top > Form1.Height then
     Enemy.Top := 0;
+
   { now lets work on the collision detection}
   if IntersectRect(overlappedRect, player.BoundsRect,enemy.BoundsRect) then begin
     EnemyTimer.enabled := false;
     LevelTimer.enabled := false;
-    ShowMessage('You are dead !' + sLineBreak + 'GAME OVER');
+    ScoreTimer.Enabled := false;
+
+    if PlayerScore.Tag > HighScore.Tag then begin
+      HighScore.Tag := PlayerScore.Tag;
+      HighScore.Caption := IntToStr(HighScore.Tag);
+
+      ShowMessage('You got a new high score' + sLineBreak + 'CONGRAGULATIONS ! !');
+    end else
+      ShowMessage('You are dead !' + sLineBreak + 'GAME OVER');
     {we are dead but let us reenabled the start button so we can start the game again !}
     Start.Enabled := True;
   end;
@@ -63,14 +82,20 @@ begin
   Level.Tag := Level.Tag + 1;
   Level.Caption := IntToStr(Level.tag);
 end;
-procedure TForm1.FormMouseMove(Sender: TObject; Shift: TShiftState; X,
+
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+  Path.Caption := ExtractFilePath(Application.ExeName);
+  GameImage.Picture.LoadFromFile(Path.Caption+'BG1.jpg');
+end;
+
+procedure TForm1.GameImageMouseMove(Sender: TObject; Shift: TShiftState; X,
   Y: Integer);
 begin
-  if enemytimer.enabled then begin
+    if enemytimer.enabled then begin
     player.Left := X - (player.Width div 2);
     player.Top := Y - (player.Height div 2);
-  end;
-
+    end;
 end;
 
 procedure TForm1.StartClick(Sender: TObject);
@@ -84,12 +109,25 @@ begin
 
   Level.Caption := '1';
   Level.Tag := StrToInt(Level.Caption);
-  Start.Enabled := False;
 
+
+  PlayerScore.Caption := '0';
+  PlayerScore.Tag := StrToInt(PlayerScore.Caption);
+
+  Start.Enabled := False; { disable the start button !}
   { start the flee game timer's }
   EnemyTimer.Enabled := true;
   LevelTimer.Enabled := true;
+  ScoreTimer.Enabled := true;
+end;
 
-  end;
+(* since the name of the game is to run away from the enemy
+  another timer is needed to update the player's score whenever the
+  preset timelimit to obtain more points has been reached ! *)
+procedure TForm1.ScoreTimerTimer(Sender: TObject);
+begin
+  PlayerScore.Tag := PlayerScore.Tag + (Level.Tag*6);
+  PlayerScore.Caption := IntToStr(PlayerScore.Tag);
+end;
 
 end.
